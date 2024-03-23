@@ -6,10 +6,14 @@ import com.cgm.patients.domain.exception.PatientNotFoundException;
 import com.cgm.patients.domain.exception.VisitNotFoundException;
 import com.cgm.patients.domain.repository.PatientRepository;
 import com.cgm.patients.domain.repository.VisitRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PatientService {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final PatientRepository patientRepository;
     private final VisitRepository visitRepository;
@@ -20,7 +24,9 @@ public class PatientService {
     }
 
     public Long createPatient(Patient patient) {
-        return patientRepository.save(patient).getId();
+        var patientId = patientRepository.save(patient).getId();
+        logger.info("Created new patient ID %s".formatted(patientId));
+        return patientId;
     }
 
     public Patient getPatientById(Long id) {
@@ -29,7 +35,9 @@ public class PatientService {
 
     public Long createVisit(Long patientId, Visit visit) {
         visit.setPatient(getPatientById(patientId));
-        return visitRepository.save(visit).getId();
+        var visitId = visitRepository.save(visit).getId();
+        logger.info("Created a new visit ID %s".formatted(visitId));
+        return visitId;
     }
 
     public Visit getPatientVisit(Long patientId, Long visitId) {
@@ -40,6 +48,7 @@ public class PatientService {
     public void updateVisit(Long patientId, Visit newVisit) {
         var oldVisit = getPatientVisit(patientId, newVisit.getId()); // check visit exists
         newVisit.setPatient(oldVisit.getPatient());
+        logger.info("Updated visit ID %s".formatted(newVisit.getId()));
         visitRepository.save(newVisit); // update
     }
 }
