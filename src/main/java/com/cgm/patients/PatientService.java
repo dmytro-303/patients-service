@@ -36,4 +36,10 @@ public class PatientService {
         return visitRepository.findByIdAndPatientId(visitId, patientId)
                 .orElseThrow(() -> new VisitNotFoundException(patientId, visitId));
     }
+
+    public void updateVisit(Long patientId, Visit newVisit) {
+        var oldVisit = getPatientVisit(patientId, newVisit.getId()); // check visit exist
+        newVisit.setPatient(oldVisit.getPatient());
+        visitRepository.save(newVisit); // update
+    }
 }

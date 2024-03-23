@@ -140,4 +140,37 @@ public class PatientServiceIntegrationTest {
         assertEquals(wrongVisitId, exception.getVisitId());
         assertEquals(patientId, exception.getPatientId());
     }
+
+    @Test
+    public void shouldUpdateVisit() {
+        var patientId = patientRepository.save(patient).getId();
+        assertNotNull(patientId);
+
+        var visit = new Visit();
+        visit.setDateTime(LocalDateTime.now());
+        visit.setType(VisitType.HOME);
+        visit.setReason(VisitReason.FIRST_VISIT);
+        visit.setPatient(patient);
+        visit.setFamilyHistory("Some family history");
+
+        var visitId = visitRepository.save(visit).getId();
+
+        var visitUpdate = new Visit();
+        visitUpdate.setId(visitId);
+        visitUpdate.setDateTime(LocalDateTime.now().plusDays(1));
+        visitUpdate.setType(VisitType.OFFICE);
+        visitUpdate.setReason(VisitReason.RECURRING);
+        visitUpdate.setFamilyHistory("Some another family history");
+
+        patientService.updateVisit(patientId, visitUpdate);
+
+        var result = visitRepository.findById(visitId).orElseThrow();
+
+        assertEquals(patientId, result.getPatient().getId());
+        assertEquals(visitUpdate.getDateTime(), result.getDateTime());
+        assertEquals(visitUpdate.getReason(), result.getReason());
+        assertEquals(visitUpdate.getType(), result.getType());
+        assertEquals(visitUpdate.getFamilyHistory(), result.getFamilyHistory());
+    }
+
 }

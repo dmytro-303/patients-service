@@ -7,10 +7,12 @@ import com.cgm.patients.dto.CreateVisitRequest;
 import com.cgm.patients.dto.CreateVisitResponse;
 import com.cgm.patients.dto.GetPatientResponse;
 import com.cgm.patients.dto.GetVisitResponse;
+import com.cgm.patients.dto.UpdateVisitRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -54,5 +56,11 @@ public class PatientController {
     @ResponseStatus(OK)
     public GetVisitResponse getPatientVisit(@PathVariable Long patientId, @PathVariable Long visitId) {
         return GetVisitResponse.fromEntity(patientService.getPatientVisit(patientId, visitId));
+    }
+
+    @PutMapping(path = "/{patientId}/visits/{visitId}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public void updateVisit(@PathVariable Long patientId, @PathVariable Long visitId, @RequestBody UpdateVisitRequest createVisitRequest) {
+        patientService.updateVisit(patientId, createVisitRequest.toEntity(visitId));
     }
 }

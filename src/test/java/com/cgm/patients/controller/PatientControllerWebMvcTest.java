@@ -7,9 +7,11 @@ import com.cgm.patients.domain.VisitReason;
 import com.cgm.patients.domain.VisitType;
 import com.cgm.patients.dto.CreatePatientRequest;
 import com.cgm.patients.dto.CreateVisitRequest;
+import com.cgm.patients.dto.UpdateVisitRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,11 +22,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -51,7 +56,8 @@ class PatientControllerWebMvcTest {
         var request = new CreatePatientRequest(null, "Chuck", "Norris", LocalDate.of(1950, 1, 1), "123-45-6789");
         var expectedPatientId = 1L;
 
-        given(patientService.createPatient(any(Patient.class))).willReturn(expectedPatientId);
+        var patientCaptor = ArgumentCaptor.forClass(Patient.class);
+        given(patientService.createPatient(patientCaptor.capture())).willReturn(expectedPatientId);
 
         mockMvc.perform(post("/api/patients")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -59,6 +65,14 @@ class PatientControllerWebMvcTest {
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.patientId").value(expectedPatientId));
+
+        verify(patientService, times(1)).createPatient(patientCaptor.capture());
+
+        var patient = patientCaptor.getValue();
+        assertEquals(request.name(), patient.getName());
+        assertEquals(request.surname(), patient.getSurname());
+        assertEquals(request.dateOfBirth(), patient.getDateOfBirth());
+        assertEquals(request.socialSecurityNumber(), patient.getSocialSecurityNumber());
     }
 
     @Test
@@ -91,7 +105,8 @@ class PatientControllerWebMvcTest {
 
         var expectedVisitId = 2L;
 
-        given(patientService.createVisit(eq(patientId), any(Visit.class))).willReturn(expectedVisitId);
+        var visitCaptor = ArgumentCaptor.forClass(Visit.class);
+        given(patientService.createVisit(eq(patientId), visitCaptor.capture())).willReturn(expectedVisitId);
 
         mockMvc.perform(post("/api/patients/{patientId}/visits", patientId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -99,6 +114,15 @@ class PatientControllerWebMvcTest {
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.visitId").value(expectedVisitId));
+
+        verify(patientService, times(1)).createVisit(
+                eq(patientId),
+                visitCaptor.capture());
+
+        var visit = visitCaptor.getValue();
+        assertEquals(request.dateTime(), visit.getDateTime());
+        assertEquals(request.reason(), visit.getReason());
+        assertEquals(request.type(), visit.getType());
     }
 
     @Test
@@ -124,5 +148,32 @@ class PatientControllerWebMvcTest {
                 .andExpect(jsonPath("$.type").value(visit.getType().label))
                 .andExpect(jsonPath("$.reason").value(visit.getReason().label))
                 .andExpect(jsonPath("$.familyHistory").value(visit.getFamilyHistory()));
+    }
+
+    @Test
+    public void shouldUpdatePatientVisit() throws Exception {
+        var patientId = 1L;
+        var request = new UpdateVisitRequest(
+                LocalDateTime.now(),
+                VisitType.HOME,
+                VisitReason.FIRST_VISIT,
+                "Some family history");
+
+        var visitId = 2L;
+
+        mockMvc.perform(put("/api/patients/{patientId}/visits/{visitId}", patientId, visitId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        var visitCaptor = ArgumentCaptor.forClass(Visit.class);
+        verify(patientService, times(1)).updateVisit(
+                eq(patientId),
+                visitCaptor.capture());
+
+        var visit = visitCaptor.getValue();
+        assertEquals(request.dateTime(), visit.getDateTime());
+        assertEquals(request.reason(), visit.getReason());
+        assertEquals(request.type(), visit.getType());
     }
 }
