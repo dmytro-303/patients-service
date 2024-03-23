@@ -38,7 +38,7 @@ public class PatientService {
     }
 
     public void updateVisit(Long patientId, Visit newVisit) {
-        var oldVisit = getPatientVisit(patientId, newVisit.getId()); // check visit exist
+        var oldVisit = getPatientVisit(patientId, newVisit.getId()); // check visit exists
         newVisit.setPatient(oldVisit.getPatient());
         visitRepository.save(newVisit); // update
     }
