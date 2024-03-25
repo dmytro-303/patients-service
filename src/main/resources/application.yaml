@@ -4,5 +4,3 @@ spring:
     username: ${DB_USER:test}
     password: ${DB_PASSWORD:password}
     driverClassName: org.h2.Driver
-  flyway:
-    enabled: true
